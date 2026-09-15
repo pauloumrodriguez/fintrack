@@ -16,6 +16,7 @@ Ainda não há banco de dados, autenticação ou funcionalidades financeiras.
 ## Comece por aqui
 
 - [Aula 1: executar e entender a primeira API](docs/01-primeira-api.md)
+- [Aula 2: criar, listar e buscar organizações](docs/02-organizations.md)
 - [Visão do produto e roteiro das próximas etapas](docs/00-roteiro.md)
 
 ## Executar no Windows

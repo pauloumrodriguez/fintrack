@@ -71,6 +71,62 @@ describe('AppController (e2e)', () => {
     expect(body[0]?.name).toBe('Padaria do Paulo');
   });
 
+  it('GET /organizations/:id encontra uma organização', async () => {
+    const createResponse = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+    const createdOrganization = createResponse.body as {
+      id: string;
+      name: string;
+      createdAt: string;
+    };
+
+    const response = await request(app.getHttpServer())
+      .get(`/organizations/${createdOrganization.id}`)
+      .expect(200);
+
+    expect(response.body).toEqual(createdOrganization);
+  });
+
+  it('GET /organizations/:id retorna 404 para organização inexistente', () => {
+    return request(app.getHttpServer())
+      .get('/organizations/00000000-0000-4000-8000-000000000000')
+      .expect(404);
+  });
+
+  it('GET /organizations/:id rejeita um id que não é UUID', () => {
+    return request(app.getHttpServer())
+      .get('/organizations/id-invalido')
+      .expect(400);
+  });
+
+  it('POST /organizations retorna 409 para nome duplicado', async () => {
+    await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: '  PADARIA DO PAULO  ' })
+      .expect(409);
+  });
+
+  it('POST /organizations rejeita propriedades não declaradas', () => {
+    return request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo', admin: true })
+      .expect(400);
+  });
+
+  it('POST /organizations rejeita nome com mais de 100 caracteres', () => {
+    return request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'a'.repeat(101) })
+      .expect(400);
+  });
+
   afterEach(async () => {
     await app.close();
   });
