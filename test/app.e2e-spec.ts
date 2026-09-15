@@ -3,6 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
 import { configureApp } from './../src/configure-app.js';
+import { OrganizationRepository } from './../src/modules/organizations/domain/repositories/organization.repository.js';
+import { InMemoryOrganizationRepository } from './../src/modules/organizations/infrastructure/repositories/in-memory-organization.repository.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -10,7 +12,10 @@ describe('AppController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(OrganizationRepository)
+      .useClass(InMemoryOrganizationRepository)
+      .compile();
 
     app = moduleFixture.createNestApplication();
 
