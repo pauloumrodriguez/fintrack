@@ -7,4 +7,8 @@ export class InMemoryOrganizationRepository implements OrganizationRepository {
   async save(organization: Organization): Promise<void> {
     this.organizations.push(organization);
   }
+
+  async findAll(): Promise<Organization[]> {
+    return [...this.organizations];
+  }
 }

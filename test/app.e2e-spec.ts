@@ -1,7 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
+import { configureApp } from './../src/configure-app.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -13,13 +14,7 @@ describe('AppController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
 
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    configureApp(app);
 
     await app.init();
   });
@@ -54,6 +49,26 @@ describe('AppController (e2e)', () => {
       .post('/organizations')
       .send({ name: '   ' })
       .expect(400);
+  });
+
+  it('GET /organizations lista as organizações criadas', async () => {
+    await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .get('/organizations')
+      .expect(200);
+
+    const body = response.body as Array<{
+      id: string;
+      name: string;
+      createdAt: string;
+    }>;
+
+    expect(body).toHaveLength(1);
+    expect(body[0]?.name).toBe('Padaria do Paulo');
   });
 
   afterEach(async () => {
