@@ -5,6 +5,8 @@ import { AppModule } from './../src/app.module.js';
 import { configureApp } from './../src/configure-app.js';
 import { OrganizationRepository } from './../src/modules/organizations/domain/repositories/organization.repository.js';
 import { InMemoryOrganizationRepository } from './../src/modules/organizations/infrastructure/repositories/in-memory-organization.repository.js';
+import { UserRepository } from './../src/modules/users/domain/repositories/user.repository.js';
+import { InMemoryUserRepository } from './../src/modules/users/infrastructure/repositories/in-memory-user.repository.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -15,6 +17,8 @@ describe('AppController (e2e)', () => {
     })
       .overrideProvider(OrganizationRepository)
       .useClass(InMemoryOrganizationRepository)
+      .overrideProvider(UserRepository)
+      .useClass(InMemoryUserRepository)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -130,6 +134,111 @@ describe('AppController (e2e)', () => {
       .post('/organizations')
       .send({ name: 'a'.repeat(101) })
       .expect(400);
+  });
+
+  it('POST /users cria um usuário sem expor a senha', async () => {
+    const organizationResponse = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+    const organization = organizationResponse.body as { id: string };
+
+    const response = await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        organizationId: organization.id,
+        name: 'Paulo',
+        email: 'paulo@example.com',
+        password: 'senha-segura',
+        role: 'ADMIN',
+      })
+      .expect(201);
+
+    const body = response.body as Record<string, unknown>;
+    expect(body.email).toBe('paulo@example.com');
+    expect(body.role).toBe('ADMIN');
+    expect(body.password).toBeUndefined();
+    expect(body.passwordHash).toBeUndefined();
+  });
+
+  it('POST /users rejeita senha com menos de 8 caracteres', async () => {
+    const organizationResponse = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+    const organization = organizationResponse.body as { id: string };
+
+    return request(app.getHttpServer())
+      .post('/users')
+      .send({
+        organizationId: organization.id,
+        name: 'Paulo',
+        email: 'paulo@example.com',
+        password: 'curta',
+        role: 'ADMIN',
+      })
+      .expect(400);
+  });
+
+  it('POST /users rejeita uma organização inexistente', () => {
+    return request(app.getHttpServer())
+      .post('/users')
+      .send({
+        organizationId: '00000000-0000-4000-8000-000000000000',
+        name: 'Paulo',
+        email: 'paulo@example.com',
+        password: 'senha-segura',
+        role: 'ADMIN',
+      })
+      .expect(404);
+  });
+
+  it('POST /users rejeita e-mail duplicado', async () => {
+    const organizationResponse = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+    const organization = organizationResponse.body as { id: string };
+    const input = {
+      organizationId: organization.id,
+      name: 'Paulo',
+      email: 'paulo@example.com',
+      password: 'senha-segura',
+      role: 'ADMIN',
+    };
+
+    await request(app.getHttpServer()).post('/users').send(input).expect(201);
+    await request(app.getHttpServer())
+      .post('/users')
+      .send({ ...input, email: 'PAULO@EXAMPLE.COM' })
+      .expect(409);
+  });
+
+  it('GET /organizations/:id/users lista os usuários da organização', async () => {
+    const organizationResponse = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+    const organization = organizationResponse.body as { id: string };
+
+    await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        organizationId: organization.id,
+        name: 'Paulo',
+        email: 'paulo@example.com',
+        password: 'senha-segura',
+        role: 'ADMIN',
+      })
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .get(`/organizations/${organization.id}/users`)
+      .expect(200);
+
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].email).toBe('paulo@example.com');
+    expect(response.body[0].passwordHash).toBeUndefined();
   });
 
   afterEach(async () => {

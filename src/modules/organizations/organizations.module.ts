@@ -35,5 +35,6 @@ import { OrganizationController } from './presentation/http/organization.control
       inject: [OrganizationRepository],
     },
   ],
+  exports: [OrganizationRepository],
 })
 export class OrganizationsModule {}
