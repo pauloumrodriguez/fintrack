@@ -1,11 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -22,6 +21,23 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect('Content-Type', /json/)
       .expect({ status: 'ok', service: 'fintrack-api' });
+  });
+
+  it('POST /organizations cria uma organização', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria do Paulo' })
+      .expect(201);
+
+    const body = response.body as {
+      id: string;
+      name: string;
+      createdAt: string;
+    };
+
+    expect(body.id).toBeTruthy();
+    expect(body.name).toBe('Padaria do Paulo');
+    expect(body.createdAt).toBeTruthy();
   });
 
   afterEach(async () => {
