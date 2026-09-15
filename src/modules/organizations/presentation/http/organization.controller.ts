@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { CreateOrganizationUseCase } from '../../application/use-cases/create-organization.use-case.js';
+import { CreateOrganizationDto } from './dto/create-organization.dto.js';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -8,7 +9,7 @@ export class OrganizationController {
   ) {}
 
   @Post()
-  create(@Body() body: { name: string }) {
+  create(@Body() body: CreateOrganizationDto) {
     return this.createOrganizationUseCase.execute(body);
   }
 }
