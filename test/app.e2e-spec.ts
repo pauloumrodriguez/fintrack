@@ -7,6 +7,8 @@ import { OrganizationRepository } from './../src/modules/organizations/domain/re
 import { InMemoryOrganizationRepository } from './../src/modules/organizations/infrastructure/repositories/in-memory-organization.repository.js';
 import { UserRepository } from './../src/modules/users/domain/repositories/user.repository.js';
 import { InMemoryUserRepository } from './../src/modules/users/infrastructure/repositories/in-memory-user.repository.js';
+import { AccountRepository } from './../src/modules/accounts/domain/repositories/account.repository.js';
+import { InMemoryAccountRepository } from './../src/modules/accounts/infrastructure/repositories/in-memory-account.repository.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -19,6 +21,8 @@ describe('AppController (e2e)', () => {
       .useClass(InMemoryOrganizationRepository)
       .overrideProvider(UserRepository)
       .useClass(InMemoryUserRepository)
+      .overrideProvider(AccountRepository)
+      .useClass(InMemoryAccountRepository)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -239,6 +243,139 @@ describe('AppController (e2e)', () => {
     expect(response.body).toHaveLength(1);
     expect(response.body[0].email).toBe('paulo@example.com');
     expect(response.body[0].passwordHash).toBeUndefined();
+  });
+
+  it('POST /accounts cria conta com saldo zero', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+
+    const response = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: '  Caixa  ' })
+      .expect(201);
+    const body = response.body as {
+      id: string;
+      organizationId: string;
+      name: string;
+      balanceInCents: number;
+      createdAt: string;
+    };
+
+    expect(body.id).toBeTruthy();
+    expect(body.organizationId).toBe(organizationId);
+    expect(body.name).toBe('Caixa');
+    expect(body.balanceInCents).toBe(0);
+    expect(body.createdAt).toBeTruthy();
+  });
+
+  it('POST /accounts rejeita organização inexistente', () => {
+    return request(app.getHttpServer())
+      .post('/accounts')
+      .send({
+        organizationId: '00000000-0000-4000-8000-000000000000',
+        name: 'Caixa',
+      })
+      .expect(404);
+  });
+
+  it('POST /accounts rejeita nome vazio e campos extras', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: '   ' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: 'Caixa', balanceInCents: 1000 })
+      .expect(400);
+  });
+
+  it('POST /accounts rejeita nome duplicado na mesma organização', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: 'Caixa' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: ' CAIXA ' })
+      .expect(409);
+  });
+
+  it('GET /organizations/:id/accounts lista somente contas dessa organização', async () => {
+    const firstOrganization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const secondOrganization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Mercado' })
+      .expect(201);
+    const firstId = (firstOrganization.body as { id: string }).id;
+    const secondId = (secondOrganization.body as { id: string }).id;
+
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId: firstId, name: 'Caixa' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId: secondId, name: 'Caixa' })
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .get(`/organizations/${firstId}/accounts`)
+      .expect(200);
+    const body = response.body as Array<{
+      id: string;
+      organizationId: string;
+    }>;
+    expect(body).toHaveLength(1);
+    expect(body[0]?.organizationId).toBe(firstId);
+  });
+
+  it('GET /organizations/:id/accounts/:accountId exige a organização correta', async () => {
+    const firstOrganization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const secondOrganization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Mercado' })
+      .expect(201);
+    const firstId = (firstOrganization.body as { id: string }).id;
+    const secondId = (secondOrganization.body as { id: string }).id;
+    const account = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId: firstId, name: 'Caixa' })
+      .expect(201);
+    const accountId = (account.body as { id: string }).id;
+
+    await request(app.getHttpServer())
+      .get(`/organizations/${firstId}/accounts/${accountId}`)
+      .expect(200);
+    await request(app.getHttpServer())
+      .get(`/organizations/${secondId}/accounts/${accountId}`)
+      .expect(404);
+  });
+
+  it('GET /organizations/:id/accounts/:accountId rejeita UUID inválido', () => {
+    return request(app.getHttpServer())
+      .get('/organizations/id-invalido/accounts/conta-invalida')
+      .expect(400);
   });
 
   afterEach(async () => {
