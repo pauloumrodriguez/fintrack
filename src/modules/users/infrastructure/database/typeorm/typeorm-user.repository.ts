@@ -36,6 +36,11 @@ export class TypeOrmUserRepository implements UserRepository {
     return record ? this.toDomain(record) : null;
   }
 
+  async findById(id: string): Promise<User | null> {
+    const record = await this.repository.findOneBy({ id });
+    return record ? this.toDomain(record) : null;
+  }
+
   async findAllByOrganizationId(organizationId: string): Promise<User[]> {
     const records = await this.repository.find({
       where: { organizationId },

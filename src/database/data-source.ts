@@ -10,6 +10,8 @@ import { CreateCategoriesTable2026091616000 } from './migrations/2026091616000-c
 import { CategoryOrmEntity } from '../modules/categories/infrastructure/database/typeorm/category.orm-entity.js';
 import { CreateTransactionsTable2026091617000 } from './migrations/2026091617000-create-transactions-table.js';
 import { TransactionOrmEntity } from '../modules/transactions/infrastructure/database/typeorm/transaction.orm-entity.js';
+import { TransferOrmEntity } from '../modules/transfers/transfer.orm-entity.js';
+import { CreateTransfersTable2026091618000 } from './migrations/2026091618000-create-transfers-table.js';
 
 if (!process.env.DATABASE_URL) {
   try {
@@ -34,6 +36,7 @@ export default new DataSource({
     AccountOrmEntity,
     CategoryOrmEntity,
     TransactionOrmEntity,
+    TransferOrmEntity,
   ],
   migrations: [
     CreateOrganizationsTable2026091522000,
@@ -41,6 +44,7 @@ export default new DataSource({
     CreateAccountsTable2026091615000,
     CreateCategoriesTable2026091616000,
     CreateTransactionsTable2026091617000,
+    CreateTransfersTable2026091618000,
   ],
   synchronize: false,
 });

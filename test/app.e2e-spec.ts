@@ -13,6 +13,10 @@ import { CategoryRepository } from './../src/modules/categories/domain/repositor
 import { InMemoryCategoryRepository } from './../src/modules/categories/infrastructure/repositories/in-memory-category.repository.js';
 import { TransactionRepository } from './../src/modules/transactions/domain/repositories/transaction.repository.js';
 import { InMemoryTransactionRepository } from './../src/modules/transactions/infrastructure/repositories/in-memory-transaction.repository.js';
+import { JwtAuthGuard } from './../src/modules/auth/jwt-auth.guard.js';
+import { UserRole } from './../src/modules/users/domain/entities/user.entity.js';
+import type { ExecutionContext } from '@nestjs/common';
+import type { AuthRequest } from './../src/modules/auth/auth-user.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -23,6 +27,25 @@ describe('AppController (e2e)', () => {
     })
       .overrideProvider(OrganizationRepository)
       .useClass(InMemoryOrganizationRepository)
+      // Existing endpoint tests focus on input/output; auth has its own tests.
+      .overrideProvider(JwtAuthGuard)
+      .useFactory({
+        factory: (organizations: OrganizationRepository) => ({
+          canActivate: async (context: ExecutionContext) => {
+            const httpRequest = context
+              .switchToHttp()
+              .getRequest<AuthRequest>();
+            const first = (await organizations.findAll())[0];
+            httpRequest.user = {
+              id: 'test-user',
+              organizationId: first?.id ?? '',
+              role: UserRole.ADMIN,
+            };
+            return true;
+          },
+        }),
+        inject: [OrganizationRepository],
+      })
       .overrideProvider(UserRepository)
       .useClass(InMemoryUserRepository)
       .overrideProvider(AccountRepository)

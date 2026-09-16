@@ -13,6 +13,8 @@ import { ListAccountsUseCase } from '../../application/use-cases/list-accounts.u
 import { AccountHttpMapper } from './account-http.mapper.js';
 import { AccountExceptionFilter } from './account-exception.filter.js';
 import { CreateAccountDto } from './dto/create-account.dto.js';
+import { Roles } from '../../../auth/auth.decorators.js';
+import { UserRole } from '../../../users/domain/entities/user.entity.js';
 
 @Controller()
 @UseFilters(AccountExceptionFilter)
@@ -24,6 +26,7 @@ export class AccountController {
   ) {}
 
   @Post('accounts')
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   async create(@Body() body: CreateAccountDto) {
     const account = await this.createAccount.execute(body);
     return AccountHttpMapper.toResponse(account);

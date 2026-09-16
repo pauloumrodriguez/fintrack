@@ -12,6 +12,8 @@ import { ListUsersUseCase } from '../../application/use-cases/list-users.use-cas
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UserExceptionFilter } from './user-exception.filter.js';
 import { UserHttpMapper } from './user-http.mapper.js';
+import { Roles } from '../../../auth/auth.decorators.js';
+import { UserRole } from '../../domain/entities/user.entity.js';
 
 @Controller()
 @UseFilters(UserExceptionFilter)
@@ -22,6 +24,7 @@ export class UserController {
   ) {}
 
   @Post('users')
+  @Roles(UserRole.ADMIN)
   async create(@Body() body: CreateUserDto) {
     const user = await this.createUserUseCase.execute(body);
 
@@ -29,6 +32,7 @@ export class UserController {
   }
 
   @Get('organizations/:organizationId/users')
+  @Roles(UserRole.ADMIN)
   async listByOrganization(
     @Param('organizationId', new ParseUUIDPipe({ version: '4' }))
     organizationId: string,

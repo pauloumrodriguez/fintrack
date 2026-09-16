@@ -12,14 +12,14 @@ tem dados independentes.
 
 ## Entregas pequenas
 
-1. **Atual:** aplicação NestJS com `GET /health` e guia da primeira aula.
+1. **Concluído:** aplicação NestJS com `GET /health` e guia da primeira aula.
 2. Organização: modelo, regras, cadastro, PostgreSQL e migrations.
 3. Usuários, autenticação e vínculo com organização.
 4. Contas e categorias, com autorização e isolamento entre organizações.
 5. Receitas e despesas, representação exata de dinheiro e consistência do saldo.
-6. Transferências atômicas: débito e crédito acontecem juntos ou nenhum acontece.
-7. Relatórios e revisão da arquitetura conforme as necessidades encontradas.
-8. Proteções adicionais, automação de testes e publicação.
+6. **Concluído:** transferências atômicas: débito e crédito acontecem juntos ou nenhum acontece.
+7. **Em andamento:** relatório mensal, login JWT e papéis estão implementados; ainda cabem relatórios mais detalhados e revisão da arquitetura.
+8. **Pendente:** proteções adicionais, automação de testes e publicação.
 
 ## Decisões que guiam as próximas aulas
 
@@ -35,4 +35,4 @@ tem dados independentes.
 - Acrescentar RLS como proteção adicional no banco, com testes de isolamento.
 
 O documento recebido descreve o destino. Este roteiro divide o percurso em aulas;
-a primeira entrega ainda não cadastra organizações nem armazena dados.
+o progresso técnico está descrito no README e nos guias de cada etapa.

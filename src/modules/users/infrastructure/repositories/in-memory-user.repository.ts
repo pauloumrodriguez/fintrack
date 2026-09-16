@@ -11,14 +11,14 @@ export class InMemoryUserRepository implements UserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const normalizedEmail = email.trim().toLowerCase();
 
-    return (
-      this.users.find((user) => user.email === normalizedEmail) ?? null
-    );
+    return this.users.find((user) => user.email === normalizedEmail) ?? null;
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.users.find((user) => user.id === id) ?? null;
   }
 
   async findAllByOrganizationId(organizationId: string): Promise<User[]> {
-    return this.users.filter(
-      (user) => user.organizationId === organizationId,
-    );
+    return this.users.filter((user) => user.organizationId === organizationId);
   }
 }

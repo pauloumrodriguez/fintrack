@@ -38,6 +38,6 @@ import { UserController } from './presentation/http/user.controller.js';
       inject: [UserRepository],
     },
   ],
-  exports: [UserRepository],
+  exports: [UserRepository, PasswordHasher],
 })
 export class UsersModule {}

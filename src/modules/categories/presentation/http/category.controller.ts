@@ -12,6 +12,8 @@ import { GetCategoryUseCase } from '../../application/use-cases/get-category.use
 import { ListCategoriesUseCase } from '../../application/use-cases/list-categories.use-case.js';
 import { CategoryExceptionFilter } from './category-exception.filter.js';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
+import { Roles } from '../../../auth/auth.decorators.js';
+import { UserRole } from '../../../users/domain/entities/user.entity.js';
 
 @Controller()
 @UseFilters(CategoryExceptionFilter)
@@ -23,6 +25,7 @@ export class CategoryController {
   ) {}
 
   @Post('categories')
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   create(@Body() body: CreateCategoryDto) {
     return this.createCategory.execute(body);
   }

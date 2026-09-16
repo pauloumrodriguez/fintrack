@@ -12,6 +12,8 @@ import { GetTransactionUseCase } from '../../application/use-cases/get-transacti
 import { ListTransactionsUseCase } from '../../application/use-cases/list-transactions.use-case.js';
 import { CreateTransactionDto } from './dto/create-transaction.dto.js';
 import { TransactionExceptionFilter } from './transaction-exception.filter.js';
+import { Roles } from '../../../auth/auth.decorators.js';
+import { UserRole } from '../../../users/domain/entities/user.entity.js';
 
 @Controller()
 @UseFilters(TransactionExceptionFilter)
@@ -23,6 +25,7 @@ export class TransactionController {
   ) {}
 
   @Post('transactions')
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   create(@Body() body: CreateTransactionDto) {
     return this.createTransaction.execute(body);
   }

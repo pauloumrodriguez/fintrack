@@ -9,6 +9,9 @@ import { UsersModule } from './modules/users/users.module.js';
 import { AccountsModule } from './modules/accounts/accounts.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { TransactionsModule } from './modules/transactions/transactions.module.js';
+import { TransfersModule } from './modules/transfers/transfers.module.js';
+import { ReportsModule } from './modules/reports/reports.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { TransactionsModule } from './modules/transactions/transactions.module.j
     AccountsModule,
     CategoriesModule,
     TransactionsModule,
+    TransfersModule,
+    ReportsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

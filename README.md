@@ -3,9 +3,9 @@
 Projeto de estudo construído em pequenas etapas. A proposta é uma API financeira
 para organizações, com contas, categorias, receitas, despesas e transferências.
 
-## Etapa atual: categorias e transações
+## Etapa atual: transferências, relatório e acesso
 
-Implementado: organizações, usuários, contas, categorias e transações, com persistência no PostgreSQL. Receitas aumentam e despesas diminuem o saldo da conta. Autenticação e autorização virão depois do núcleo financeiro.
+Implementado: organizações, usuários, contas, categorias, transações, transferências, relatório mensal, login com JWT e permissões por papel. Receitas e despesas alteram o saldo; transferências movem saldo entre contas sem afetar o resultado do mês.
 
 ## Comece por aqui
 
@@ -15,6 +15,7 @@ Implementado: organizações, usuários, contas, categorias e transações, com 
 - [Aula 4: usuários](docs/04-users.md)
 - [Aula 5: contas](docs/05-accounts.md)
 - [Aula 6: categorias e transações](docs/06-categories-transactions.md)
+- [Aula 7: transferências, relatório e acesso](docs/07-finance-auth.md)
 - [Visão do produto e roteiro das próximas etapas](docs/00-roteiro.md)
 
 ## Executar no Windows
@@ -31,7 +32,7 @@ npm.cmd run start:dev
 Se as dependências já estiverem instaladas, não precisa repetir `npm.cmd ci`.
 Abra http://127.0.0.1:3000/health. Para parar o servidor, pressione Ctrl+C.
 
-O comando de Docker acima usa o caminho da instalação local deste computador. O arquivo `.env` contém a conexão local e não é enviado ao Git; use `.env.example` como referência em outra máquina.
+O comando de Docker acima usa o caminho da instalação local deste computador. O arquivo `.env` contém a conexão local e a chave `JWT_SECRET`; ele não é enviado ao Git. Use `.env.example` como referência em outra máquina e gere uma chave aleatória com pelo menos 32 caracteres.
 
 ## Verificar
 
@@ -61,6 +62,9 @@ npm.cmd run start:prod
 | `src/modules/accounts/` | Regras, rotas e persistência de contas. |
 | `src/modules/categories/` | Categorias de receita e despesa. |
 | `src/modules/transactions/` | Lançamentos financeiros e alteração atômica do saldo. |
+| `src/modules/transfers/` | Transferência entre contas da mesma organização. |
+| `src/modules/reports/` | Resumo mensal de receitas e despesas. |
+| `src/modules/auth/` | Cadastro inicial, login, JWT e proteção das rotas. |
 | `src/database/migrations/` | Histórico das tabelas do PostgreSQL. |
 | `package.json` | Listar dependências e comandos. |
 | `package-lock.json` | Registrar as versões instaladas para reprodução. |
