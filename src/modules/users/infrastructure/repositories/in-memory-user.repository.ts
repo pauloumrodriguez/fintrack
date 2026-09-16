@@ -8,14 +8,16 @@ export class InMemoryUserRepository implements UserRepository {
     this.users.push(user);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string, organizationId?: string): Promise<User | null> {
     const normalizedEmail = email.trim().toLowerCase();
 
-    return this.users.find((user) => user.email === normalizedEmail) ?? null;
+    return this.users.find((user) => user.email === normalizedEmail &&
+      (!organizationId || user.organizationId === organizationId)) ?? null;
   }
 
-  async findById(id: string): Promise<User | null> {
-    return this.users.find((user) => user.id === id) ?? null;
+  async findById(id: string, organizationId?: string): Promise<User | null> {
+    return this.users.find((user) => user.id === id &&
+      (!organizationId || user.organizationId === organizationId)) ?? null;
   }
 
   async findAllByOrganizationId(organizationId: string): Promise<User[]> {

@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
   UseFilters,
 } from '@nestjs/common';
 import { CreateCategoryUseCase } from '../../application/use-cases/create-category.use-case.js';
@@ -14,6 +15,7 @@ import { CategoryExceptionFilter } from './category-exception.filter.js';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
 import { Roles } from '../../../auth/auth.decorators.js';
 import { UserRole } from '../../../users/domain/entities/user.entity.js';
+import type { AuthRequest } from '../../../auth/auth-user.js';
 
 @Controller()
 @UseFilters(CategoryExceptionFilter)
@@ -26,8 +28,8 @@ export class CategoryController {
 
   @Post('categories')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
-  create(@Body() body: CreateCategoryDto) {
-    return this.createCategory.execute(body);
+  create(@Body() body: CreateCategoryDto, @Req() request: AuthRequest) {
+    return this.createCategory.execute({ ...body, organizationId: request.user!.organizationId });
   }
 
   @Get('organizations/:organizationId/categories')

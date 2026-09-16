@@ -46,7 +46,7 @@ export class JwtAuthGuard implements CanActivate {
     ) {
       throw new UnauthorizedException();
     }
-    const user = await this.users.findById(claims.sub);
+    const user = await this.users.findById(claims.sub, claims.organizationId);
     if (!user || user.organizationId !== claims.organizationId)
       throw new UnauthorizedException();
     request.user = {

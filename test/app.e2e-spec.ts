@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { randomUUID } from 'node:crypto';
 import { AppModule } from './../src/app.module.js';
 import { configureApp } from './../src/configure-app.js';
 import { OrganizationRepository } from './../src/modules/organizations/domain/repositories/organization.repository.js';
@@ -475,6 +476,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/transactions')
+      .set('Idempotency-Key', randomUUID())
       .send({
         organizationId,
         accountId,
@@ -485,6 +487,7 @@ describe('AppController (e2e)', () => {
       .expect(201);
     await request(app.getHttpServer())
       .post('/transactions')
+      .set('Idempotency-Key', randomUUID())
       .send({
         organizationId,
         accountId,
@@ -529,14 +532,17 @@ describe('AppController (e2e)', () => {
     };
     await request(app.getHttpServer())
       .post('/transactions')
+      .set('Idempotency-Key', randomUUID())
       .send({ ...input, amountInCents: 0 })
       .expect(400);
     await request(app.getHttpServer())
       .post('/transactions')
+      .set('Idempotency-Key', randomUUID())
       .send({ ...input, amountInCents: 1.5 })
       .expect(400);
     await request(app.getHttpServer())
       .post('/transactions')
+      .set('Idempotency-Key', randomUUID())
       .send({ ...input, type: 'EXPENSE' })
       .expect(400);
     const updatedAccount = await request(app.getHttpServer())

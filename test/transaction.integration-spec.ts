@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import dataSource from '../src/database/data-source.js';
+import { TenantDb } from '../src/database/tenant-db.js';
 import { AccountOrmEntity } from '../src/modules/accounts/infrastructure/database/typeorm/account.orm-entity.js';
 import { CategoryType } from '../src/modules/categories/domain/entities/category.entity.js';
 import { CategoryOrmEntity } from '../src/modules/categories/infrastructure/database/typeorm/category.orm-entity.js';
@@ -60,10 +61,7 @@ describe('TransactionRepository com PostgreSQL', () => {
       type: CategoryType.INCOME,
       createdAt: now,
     });
-    const repository = new TypeOrmTransactionRepository(
-      dataSource,
-      dataSource.getRepository(TransactionOrmEntity),
-    );
+    const repository = new TypeOrmTransactionRepository(new TenantDb(dataSource));
     const createTransaction = (id: string) =>
       new Transaction({
         id,

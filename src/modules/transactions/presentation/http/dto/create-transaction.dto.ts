@@ -13,8 +13,9 @@ import {
 import { TransactionType } from '../../../domain/entities/transaction.entity.js';
 
 export class CreateTransactionDto {
+  @IsOptional()
   @IsUUID('4')
-  organizationId: string;
+  organizationId?: string;
 
   @IsUUID('4')
   accountId: string;

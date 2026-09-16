@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/configure-app.js';
 import dataSource from '../src/database/data-source.js';
@@ -14,10 +15,13 @@ import { UserOrmEntity } from '../src/modules/users/infrastructure/database/type
 
 describe('Auth, transfers and reports with PostgreSQL', () => {
   let app: INestApplication;
+  let appDatabase: DataSource;
   const organizationIds: string[] = [];
 
   beforeAll(async () => {
     await dataSource.initialize();
+    appDatabase = new DataSource({ type: 'postgres', url: process.env.DATABASE_URL });
+    await appDatabase.initialize();
     const module = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -46,6 +50,7 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
         .delete({ id: organizationId });
     }
     await app.close();
+    await appDatabase.destroy();
     await dataSource.destroy();
   });
 
@@ -85,13 +90,13 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
       .toBe('Organization name already registered');
     const login = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email, password: 'senha-forte-123' })
+      .send({ organizationId, email, password: 'senha-forte-123' })
       .expect(201);
     const token = (login.body as { accessToken: string }).accessToken;
     expect(token).toBeTruthy();
     await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email, password: 'errada' })
+      .send({ organizationId, email, password: 'errada' })
       .expect(401);
     await request(app.getHttpServer())
       .get('/auth/me')
@@ -119,18 +124,28 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
       .expect(201);
     const categoryId = (category.body as { id: string }).id;
     const occurredAt = '2026-09-15T12:00:00.000Z';
-    await request(app.getHttpServer())
+    const incomeInput = {
+      organizationId, accountId: fromAccountId, categoryId,
+      amountInCents: 500, type: 'INCOME', occurredAt,
+    };
+    const incomeKey = randomUUID();
+    const incomeResponse = await request(app.getHttpServer())
       .post('/transactions')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        organizationId,
-        accountId: fromAccountId,
-        categoryId,
-        amountInCents: 500,
-        type: 'INCOME',
-        occurredAt,
-      })
+      .set('Idempotency-Key', incomeKey)
+      .send(incomeInput)
       .expect(201);
+    const replay = await request(app.getHttpServer()).post('/transactions')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', incomeKey).send(incomeInput).expect(201);
+    expect((replay.body as { id: string }).id).toBe((incomeResponse.body as { id: string }).id);
+    await request(app.getHttpServer()).post('/transactions')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', incomeKey)
+      .send({ ...incomeInput, amountInCents: 501 }).expect(409);
+    await request(app.getHttpServer()).post('/transactions')
+      .set('Authorization', `Bearer ${token}`)
+      .send(incomeInput).expect(400);
     const transfer = {
       organizationId,
       fromAccountId,
@@ -160,6 +175,7 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
     await request(app.getHttpServer())
       .post('/transactions')
       .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', randomUUID())
       .send({ organizationId, accountId: toAccountId,
         categoryId: (expenseCategory.body as { id: string }).id,
         amountInCents: 100, type: 'EXPENSE', occurredAt })
@@ -207,7 +223,7 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
       .expect(201);
     const viewerLogin = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email: viewerEmail, password: 'senha-forte-123' })
+      .send({ organizationId, email: viewerEmail, password: 'senha-forte-123' })
       .expect(201);
     const viewerToken = (viewerLogin.body as { accessToken: string })
       .accessToken;
@@ -243,15 +259,28 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
       .expect(201);
     const managerLogin = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email: managerEmail, password: 'senha-forte-123' })
+      .send({ organizationId, email: managerEmail, password: 'senha-forte-123' })
       .expect(201);
     const managerToken = (managerLogin.body as { accessToken: string })
       .accessToken;
-    await request(app.getHttpServer())
+    const managerAccount = await request(app.getHttpServer())
       .post('/accounts')
       .set('Authorization', `Bearer ${managerToken}`)
       .send({ organizationId, name: 'Conta do gerente' })
       .expect(201);
+    const managerAccountId = (managerAccount.body as { id: string }).id;
+    const concurrentKey = randomUUID();
+    const concurrentInput = { ...incomeInput, accountId: managerAccountId, amountInCents: 50 };
+    const repeated = await Promise.all([1, 2].map(() => request(app.getHttpServer())
+      .post('/transactions').set('Authorization', `Bearer ${managerToken}`)
+      .set('Idempotency-Key', concurrentKey).send(concurrentInput)));
+    expect(repeated.map((result) => result.status)).toEqual([201, 201]);
+    expect((repeated[0].body as { id: string }).id).toBe((repeated[1].body as { id: string }).id);
+    const managerBalance = await dataSource.getRepository(AccountOrmEntity)
+      .findOneByOrFail({ id: managerAccountId });
+    expect(managerBalance.balanceInCents).toBe(50);
+    expect(await dataSource.getRepository(TransactionOrmEntity)
+      .countBy({ organizationId, idempotencyKey: concurrentKey })).toBe(1);
     await request(app.getHttpServer())
       .post('/users')
       .set('Authorization', `Bearer ${managerToken}`)
@@ -316,5 +345,27 @@ describe('Auth, transfers and reports with PostgreSQL', () => {
         amountInCents: 50,
       })
       .expect(404);
+
+    const role = await appDatabase.query(`SELECT current_user AS name, rolsuper, rolbypassrls
+      FROM pg_roles WHERE rolname = current_user`) as Array<{
+        name: string; rolsuper: boolean; rolbypassrls: boolean }>;
+    expect(role[0]).toMatchObject({ name: 'fintrack_app', rolsuper: false, rolbypassrls: false });
+    const withoutContext = await appDatabase.query('SELECT id FROM accounts WHERE id = $1',
+      [(otherAccount.body as { id: string }).id]) as Array<{ id: string }>;
+    expect(withoutContext).toHaveLength(0);
+    await appDatabase.transaction(async (manager) => {
+      await manager.query("SELECT set_config('fintrack.organization_id', $1, true)", [organizationId]);
+      const own = await manager.query('SELECT id FROM accounts WHERE id = $1',
+        [fromAccountId]) as Array<{ id: string }>;
+      const foreign = await manager.query('SELECT id FROM accounts WHERE id = $1',
+        [(otherAccount.body as { id: string }).id]) as Array<{ id: string }>;
+      expect(own).toHaveLength(1);
+      expect(foreign).toHaveLength(0);
+    });
+    await expect(appDatabase.transaction(async (manager) => {
+      await manager.query("SELECT set_config('fintrack.organization_id', $1, true)", [organizationId]);
+      await manager.query(`INSERT INTO accounts (id, organization_id, name, balance_in_cents, created_at)
+        VALUES ($1, $2, 'Blocked', 0, now())`, [randomUUID(), otherOrganizationId]);
+    })).rejects.toThrow();
   });
 });

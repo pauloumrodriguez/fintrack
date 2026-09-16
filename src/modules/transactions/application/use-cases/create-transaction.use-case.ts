@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { AccountRepository } from '../../../accounts/domain/repositories/account.repository.js';
 import { CategoryRepository } from '../../../categories/domain/repositories/category.repository.js';
 import { Transaction, TransactionType } from '../../domain/entities/transaction.entity.js';
@@ -16,6 +16,7 @@ interface CreateTransactionInput {
   type: TransactionType;
   description?: string;
   occurredAt?: string;
+  idempotencyKey?: string;
 }
 
 export class CreateTransactionUseCase {
@@ -45,6 +46,14 @@ export class CreateTransactionUseCase {
     }
 
     const now = new Date();
+    const requestHash = input.idempotencyKey
+      ? createHash('sha256').update(JSON.stringify({
+          accountId: input.accountId, categoryId: input.categoryId,
+          amountInCents: input.amountInCents, type: input.type,
+          description: (input.description ?? '').trim(),
+          occurredAt: input.occurredAt ? new Date(input.occurredAt).toISOString() : null,
+        })).digest('hex')
+      : undefined;
     const transaction = new Transaction({
       id: randomUUID(),
       organizationId: input.organizationId,
@@ -55,6 +64,8 @@ export class CreateTransactionUseCase {
       description: input.description ?? '',
       occurredAt: input.occurredAt ? new Date(input.occurredAt) : now,
       createdAt: now,
+      idempotencyKey: input.idempotencyKey,
+      requestHash,
     });
     if (
       !Number.isSafeInteger(
@@ -63,7 +74,6 @@ export class CreateTransactionUseCase {
     ) {
       throw new TransactionBalanceOverflowError();
     }
-    await this.transactions.createAndApplyBalance(transaction);
-    return transaction;
+    return this.transactions.createAndApplyBalance(transaction);
   }
 }

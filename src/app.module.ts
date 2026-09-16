@@ -12,6 +12,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module.j
 import { TransfersModule } from './modules/transfers/transfers.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { TenantDbModule } from './database/tenant-db.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
         synchronize: false,
       }),
     }),
+    TenantDbModule,
     OrganizationsModule,
     UsersModule,
     AccountsModule,

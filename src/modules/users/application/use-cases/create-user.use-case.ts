@@ -32,7 +32,7 @@ export class CreateUserUseCase {
 
     const normalizedEmail = input.email.trim().toLowerCase();
     const userWithSameEmail =
-      await this.userRepository.findByEmail(normalizedEmail);
+      await this.userRepository.findByEmail(normalizedEmail, input.organizationId);
 
     if (userWithSameEmail) {
       throw new UserAlreadyExistsError(normalizedEmail);

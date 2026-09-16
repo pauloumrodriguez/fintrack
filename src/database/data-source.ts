@@ -12,8 +12,10 @@ import { CreateTransactionsTable2026091617000 } from './migrations/2026091617000
 import { TransactionOrmEntity } from '../modules/transactions/infrastructure/database/typeorm/transaction.orm-entity.js';
 import { TransferOrmEntity } from '../modules/transfers/transfer.orm-entity.js';
 import { CreateTransfersTable2026091618000 } from './migrations/2026091618000-create-transfers-table.js';
+import { EnableTenantRls2026091619000 } from './migrations/2026091619000-enable-tenant-rls.js';
+import { AddTransactionIdempotency2026091620000 } from './migrations/2026091620000-add-transaction-idempotency.js';
 
-if (!process.env.DATABASE_URL) {
+if (!process.env.MIGRATION_DATABASE_URL) {
   try {
     process.loadEnvFile();
   } catch {
@@ -21,10 +23,10 @@ if (!process.env.DATABASE_URL) {
   }
 }
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.MIGRATION_DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error('DATABASE_URL is required');
+  throw new Error('MIGRATION_DATABASE_URL is required');
 }
 
 export default new DataSource({
@@ -45,6 +47,8 @@ export default new DataSource({
     CreateCategoriesTable2026091616000,
     CreateTransactionsTable2026091617000,
     CreateTransfersTable2026091618000,
+    EnableTenantRls2026091619000,
+    AddTransactionIdempotency2026091620000,
   ],
   synchronize: false,
 });

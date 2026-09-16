@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
   UseFilters,
 } from '@nestjs/common';
 import { CreateAccountUseCase } from '../../application/use-cases/create-account.use-case.js';
@@ -15,6 +16,7 @@ import { AccountExceptionFilter } from './account-exception.filter.js';
 import { CreateAccountDto } from './dto/create-account.dto.js';
 import { Roles } from '../../../auth/auth.decorators.js';
 import { UserRole } from '../../../users/domain/entities/user.entity.js';
+import type { AuthRequest } from '../../../auth/auth-user.js';
 
 @Controller()
 @UseFilters(AccountExceptionFilter)
@@ -27,8 +29,8 @@ export class AccountController {
 
   @Post('accounts')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
-  async create(@Body() body: CreateAccountDto) {
-    const account = await this.createAccount.execute(body);
+  async create(@Body() body: CreateAccountDto, @Req() request: AuthRequest) {
+    const account = await this.createAccount.execute({ ...body, organizationId: request.user!.organizationId });
     return AccountHttpMapper.toResponse(account);
   }
 

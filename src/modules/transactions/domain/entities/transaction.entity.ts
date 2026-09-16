@@ -13,6 +13,8 @@ interface TransactionProps {
   description: string;
   occurredAt: Date;
   createdAt: Date;
+  idempotencyKey?: string;
+  requestHash?: string;
 }
 
 export class Transaction {
@@ -25,6 +27,8 @@ export class Transaction {
   readonly description: string;
   readonly occurredAt: Date;
   readonly createdAt: Date;
+  readonly idempotencyKey?: string;
+  readonly requestHash?: string;
 
   constructor(props: TransactionProps) {
     if (!Number.isSafeInteger(props.amountInCents) || props.amountInCents <= 0) {
@@ -52,6 +56,8 @@ export class Transaction {
     this.description = description;
     this.occurredAt = props.occurredAt;
     this.createdAt = props.createdAt;
+    this.idempotencyKey = props.idempotencyKey;
+    this.requestHash = props.requestHash;
   }
 
   get balanceDeltaInCents(): number {

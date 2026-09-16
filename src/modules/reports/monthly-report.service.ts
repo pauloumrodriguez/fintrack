@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { TenantDb } from '../../database/tenant-db.js';
 import { TransactionOrmEntity } from '../transactions/infrastructure/database/typeorm/transaction.orm-entity.js';
 
 interface MonthlyTotals {
@@ -11,10 +10,7 @@ interface MonthlyTotals {
 
 @Injectable()
 export class MonthlyReportService {
-  constructor(
-    @InjectRepository(TransactionOrmEntity)
-    private readonly transactions: Repository<TransactionOrmEntity>,
-  ) {}
+  constructor(private readonly tenantDb: TenantDb) {}
 
   async get(organizationId: string, month: string) {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
@@ -23,7 +19,7 @@ export class MonthlyReportService {
     const [year, monthNumber] = month.split('-').map(Number);
     const from = new Date(Date.UTC(year, monthNumber - 1, 1));
     const until = new Date(Date.UTC(year, monthNumber, 1));
-    const totals = await this.transactions
+    const totals = await this.tenantDb.run(organizationId, (manager) => manager.getRepository(TransactionOrmEntity)
       .createQueryBuilder('transaction')
       .select(
         "COALESCE(SUM(CASE WHEN transaction.type = 'INCOME' THEN transaction.amountInCents ELSE 0 END), 0)",
@@ -39,7 +35,7 @@ export class MonthlyReportService {
         'transaction.occurredAt >= :from AND transaction.occurredAt < :until',
         { from, until },
       )
-      .getRawOne<MonthlyTotals>();
+      .getRawOne<MonthlyTotals>());
     const incomeInCents = Number(totals?.income ?? 0);
     const expenseInCents = Number(totals?.expense ?? 0);
     const netInCents = incomeInCents - expenseInCents;

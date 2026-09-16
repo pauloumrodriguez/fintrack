@@ -4,10 +4,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectDataSource } from '@nestjs/typeorm';
 import { verify } from 'argon2';
 import { randomUUID } from 'node:crypto';
-import { DataSource } from 'typeorm';
+import { TenantDb } from '../../database/tenant-db.js';
 import { OrganizationOrmEntity } from '../organizations/infrastructure/database/typeorm/organization.orm-entity.js';
 import { PasswordHasher } from '../users/application/security/password-hasher.js';
 import { User, UserRole } from '../users/domain/entities/user.entity.js';
@@ -18,7 +17,7 @@ import { LoginDto, RegisterDto } from './auth.dto.js';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly tenantDb: TenantDb,
     private readonly users: UserRepository,
     private readonly hasher: PasswordHasher,
     private readonly jwt: JwtService,
@@ -26,8 +25,6 @@ export class AuthService {
 
   async register(input: RegisterDto) {
     const email = input.email.trim().toLowerCase();
-    if (await this.users.findByEmail(email))
-      throw new ConflictException('Email already registered');
     const now = new Date();
     const organization = {
       id: randomUUID(),
@@ -44,7 +41,7 @@ export class AuthService {
       createdAt: now,
     });
     try {
-      await this.dataSource.transaction(async (manager) => {
+      await this.tenantDb.run(organization.id, async (manager) => {
         await manager.insert(OrganizationOrmEntity, organization);
         await manager.insert(UserOrmEntity, user);
       });
@@ -64,7 +61,7 @@ export class AuthService {
   }
 
   async login(input: LoginDto) {
-    const user = await this.users.findByEmail(input.email);
+    const user = await this.users.findByEmail(input.email, input.organizationId);
     if (!user || !(await verify(user.passwordHash, input.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }

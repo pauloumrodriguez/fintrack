@@ -1,10 +1,11 @@
 import { Transform } from 'class-transformer';
-import { IsEnum, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 import { CategoryType } from '../../../domain/entities/category.entity.js';
 
 export class CreateCategoryDto {
+  @IsOptional()
   @IsUUID('4')
-  organizationId: string;
+  organizationId?: string;
 
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim() : value,

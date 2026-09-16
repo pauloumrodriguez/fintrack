@@ -1,7 +1,7 @@
 import { Transaction } from '../entities/transaction.entity.js';
 
 export abstract class TransactionRepository {
-  abstract createAndApplyBalance(transaction: Transaction): Promise<void>;
+  abstract createAndApplyBalance(transaction: Transaction): Promise<Transaction>;
   abstract findById(
     organizationId: string,
     id: string,

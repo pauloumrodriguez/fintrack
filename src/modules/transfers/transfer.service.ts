@@ -4,22 +4,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { DataSource } from 'typeorm';
+import { TenantDb } from '../../database/tenant-db.js';
 import { AccountOrmEntity } from '../accounts/infrastructure/database/typeorm/account.orm-entity.js';
 import { CreateTransferDto } from './create-transfer.dto.js';
 import { TransferOrmEntity } from './transfer.orm-entity.js';
 
 @Injectable()
 export class TransferService {
-  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
+  constructor(private readonly tenantDb: TenantDb) {}
 
-  async create(input: CreateTransferDto): Promise<TransferOrmEntity> {
+  async create(input: CreateTransferDto & { organizationId: string }): Promise<TransferOrmEntity> {
     if (input.fromAccountId === input.toAccountId) {
       throw new BadRequestException('Transfer accounts must be different');
     }
-    return this.dataSource.transaction(async (manager) => {
+    return this.tenantDb.run(input.organizationId, async (manager) => {
       // Lock in a stable order so opposite transfers cannot deadlock.
       const ids = [input.fromAccountId, input.toAccountId].sort();
       const accounts = [];
@@ -73,9 +72,8 @@ export class TransferService {
   }
 
   list(organizationId: string): Promise<TransferOrmEntity[]> {
-    return this.dataSource.getRepository(TransferOrmEntity).find({
-      where: { organizationId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
+    return this.tenantDb.run(organizationId, (manager) => manager.getRepository(TransferOrmEntity).find({
+      where: { organizationId }, order: { createdAt: 'DESC', id: 'DESC' },
+    }));
   }
 }

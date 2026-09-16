@@ -1,7 +1,8 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, Length, Matches } from 'class-validator';
+import { IsEmail, IsString, IsUUID, Length, Matches } from 'class-validator';
 
 export class LoginDto {
+  @IsUUID('4') organizationId: string;
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
@@ -10,7 +11,7 @@ export class LoginDto {
   @IsString() password: string;
 }
 
-export class RegisterDto extends LoginDto {
+export class RegisterDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @Matches(/\S/)
@@ -21,5 +22,7 @@ export class RegisterDto extends LoginDto {
   @Matches(/\S/)
   @Length(1, 100)
   name: string;
-  @Length(8, 128) declare password: string;
+  @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)
+  @IsEmail() email: string;
+  @IsString() @Length(8, 128) password: string;
 }

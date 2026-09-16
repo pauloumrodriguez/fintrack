@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
+  IsOptional,
   IsString,
   IsUUID,
   Length,
@@ -10,8 +11,9 @@ import {
 import { UserRole } from '../../../domain/entities/user.entity.js';
 
 export class CreateUserDto {
+  @IsOptional()
   @IsUUID('4')
-  organizationId: string;
+  organizationId?: string;
 
   @IsString()
   @Transform(({ value }) =>

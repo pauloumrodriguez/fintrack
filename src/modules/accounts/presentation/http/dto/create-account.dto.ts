@@ -1,9 +1,10 @@
 import { Transform } from 'class-transformer';
-import { IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 
 export class CreateAccountDto {
+  @IsOptional()
   @IsUUID('4')
-  organizationId: string;
+  organizationId?: string;
 
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim() : value,
