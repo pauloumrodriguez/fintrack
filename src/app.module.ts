@@ -7,6 +7,8 @@ import { AppService } from './app.service.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { AccountsModule } from './modules/accounts/accounts.module.js';
+import { CategoriesModule } from './modules/categories/categories.module.js';
+import { TransactionsModule } from './modules/transactions/transactions.module.js';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { AccountsModule } from './modules/accounts/accounts.module.js';
     OrganizationsModule,
     UsersModule,
     AccountsModule,
+    CategoriesModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -9,6 +9,10 @@ import { UserRepository } from './../src/modules/users/domain/repositories/user.
 import { InMemoryUserRepository } from './../src/modules/users/infrastructure/repositories/in-memory-user.repository.js';
 import { AccountRepository } from './../src/modules/accounts/domain/repositories/account.repository.js';
 import { InMemoryAccountRepository } from './../src/modules/accounts/infrastructure/repositories/in-memory-account.repository.js';
+import { CategoryRepository } from './../src/modules/categories/domain/repositories/category.repository.js';
+import { InMemoryCategoryRepository } from './../src/modules/categories/infrastructure/repositories/in-memory-category.repository.js';
+import { TransactionRepository } from './../src/modules/transactions/domain/repositories/transaction.repository.js';
+import { InMemoryTransactionRepository } from './../src/modules/transactions/infrastructure/repositories/in-memory-transaction.repository.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -23,6 +27,14 @@ describe('AppController (e2e)', () => {
       .useClass(InMemoryUserRepository)
       .overrideProvider(AccountRepository)
       .useClass(InMemoryAccountRepository)
+      .overrideProvider(CategoryRepository)
+      .useClass(InMemoryCategoryRepository)
+      .overrideProvider(TransactionRepository)
+      .useFactory({
+        factory: (accounts: AccountRepository) =>
+          new InMemoryTransactionRepository(accounts),
+        inject: [AccountRepository],
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -376,6 +388,138 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/organizations/id-invalido/accounts/conta-invalida')
       .expect(400);
+  });
+
+  it('POST /categories cria e lista categorias por organização', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+    await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: ' Vendas ', type: 'INCOME' })
+      .expect(201);
+    const listed = await request(app.getHttpServer())
+      .get(`/organizations/${organizationId}/categories`)
+      .expect(200);
+    const body = listed.body as Array<{ name: string; type: string }>;
+    expect(body).toHaveLength(1);
+    expect(body[0]).toMatchObject({ name: 'Vendas', type: 'INCOME' });
+  });
+
+  it('POST /categories rejeita tipo inválido e nome duplicado', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+    await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: 'Vendas', type: 'OTHER' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: 'Vendas', type: 'INCOME' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: ' VENDAS ', type: 'INCOME' })
+      .expect(409);
+  });
+
+  it('POST /transactions atualiza o saldo após receita e despesa', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+    const account = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: 'Caixa' })
+      .expect(201);
+    const accountId = (account.body as { id: string }).id;
+    const incomeCategory = await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: 'Vendas', type: 'INCOME' })
+      .expect(201);
+    const expenseCategory = await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: 'Aluguel', type: 'EXPENSE' })
+      .expect(201);
+    const incomeCategoryId = (incomeCategory.body as { id: string }).id;
+    const expenseCategoryId = (expenseCategory.body as { id: string }).id;
+
+    await request(app.getHttpServer())
+      .post('/transactions')
+      .send({
+        organizationId,
+        accountId,
+        categoryId: incomeCategoryId,
+        amountInCents: 2000,
+        type: 'INCOME',
+      })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/transactions')
+      .send({
+        organizationId,
+        accountId,
+        categoryId: expenseCategoryId,
+        amountInCents: 750,
+        type: 'EXPENSE',
+      })
+      .expect(201);
+
+    const updatedAccount = await request(app.getHttpServer())
+      .get(`/organizations/${organizationId}/accounts/${accountId}`)
+      .expect(200);
+    expect(updatedAccount.body).toMatchObject({ balanceInCents: 1250 });
+    const transactions = await request(app.getHttpServer())
+      .get(`/organizations/${organizationId}/transactions`)
+      .expect(200);
+    expect(transactions.body).toHaveLength(2);
+  });
+
+  it('POST /transactions rejeita categoria incompatível e valor inválido', async () => {
+    const organization = await request(app.getHttpServer())
+      .post('/organizations')
+      .send({ name: 'Padaria' })
+      .expect(201);
+    const organizationId = (organization.body as { id: string }).id;
+    const account = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ organizationId, name: 'Caixa' })
+      .expect(201);
+    const accountId = (account.body as { id: string }).id;
+    const category = await request(app.getHttpServer())
+      .post('/categories')
+      .send({ organizationId, name: 'Vendas', type: 'INCOME' })
+      .expect(201);
+    const categoryId = (category.body as { id: string }).id;
+    const input = {
+      organizationId,
+      accountId,
+      categoryId,
+      amountInCents: 100,
+      type: 'INCOME',
+    };
+    await request(app.getHttpServer())
+      .post('/transactions')
+      .send({ ...input, amountInCents: 0 })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/transactions')
+      .send({ ...input, amountInCents: 1.5 })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/transactions')
+      .send({ ...input, type: 'EXPENSE' })
+      .expect(400);
+    const updatedAccount = await request(app.getHttpServer())
+      .get(`/organizations/${organizationId}/accounts/${accountId}`)
+      .expect(200);
+    expect(updatedAccount.body).toMatchObject({ balanceInCents: 0 });
   });
 
   afterEach(async () => {

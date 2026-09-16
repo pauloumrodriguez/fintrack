@@ -6,6 +6,10 @@ import { CreateAccountsTable2026091615000 } from './migrations/2026091615000-cre
 import { OrganizationOrmEntity } from '../modules/organizations/infrastructure/database/typeorm/organization.orm-entity.js';
 import { UserOrmEntity } from '../modules/users/infrastructure/database/typeorm/user.orm-entity.js';
 import { AccountOrmEntity } from '../modules/accounts/infrastructure/database/typeorm/account.orm-entity.js';
+import { CreateCategoriesTable2026091616000 } from './migrations/2026091616000-create-categories-table.js';
+import { CategoryOrmEntity } from '../modules/categories/infrastructure/database/typeorm/category.orm-entity.js';
+import { CreateTransactionsTable2026091617000 } from './migrations/2026091617000-create-transactions-table.js';
+import { TransactionOrmEntity } from '../modules/transactions/infrastructure/database/typeorm/transaction.orm-entity.js';
 
 if (!process.env.DATABASE_URL) {
   try {
@@ -24,11 +28,19 @@ if (!databaseUrl) {
 export default new DataSource({
   type: 'postgres',
   url: databaseUrl,
-  entities: [OrganizationOrmEntity, UserOrmEntity, AccountOrmEntity],
+  entities: [
+    OrganizationOrmEntity,
+    UserOrmEntity,
+    AccountOrmEntity,
+    CategoryOrmEntity,
+    TransactionOrmEntity,
+  ],
   migrations: [
     CreateOrganizationsTable2026091522000,
     CreateUsersTable2026091523000,
     CreateAccountsTable2026091615000,
+    CreateCategoriesTable2026091616000,
+    CreateTransactionsTable2026091617000,
   ],
   synchronize: false,
 });

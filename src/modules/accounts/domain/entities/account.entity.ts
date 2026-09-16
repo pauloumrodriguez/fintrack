@@ -35,4 +35,18 @@ export class Account {
     this.balanceInCents = balanceInCents;
     this.createdAt = props.createdAt;
   }
+
+  withBalanceChange(deltaInCents: number): Account {
+    const nextBalance = this.balanceInCents + deltaInCents;
+    if (!Number.isSafeInteger(nextBalance)) {
+      throw new Error('Account balance exceeds safe integer range');
+    }
+    return new Account({
+      id: this.id,
+      organizationId: this.organizationId,
+      name: this.name,
+      balanceInCents: nextBalance,
+      createdAt: this.createdAt,
+    });
+  }
 }

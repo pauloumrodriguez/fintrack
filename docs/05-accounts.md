@@ -1,6 +1,6 @@
 # Módulo de contas
 
-Uma conta pertence a uma organização, tem nome e começa com saldo zero. O saldo é representado por um número inteiro de centavos: `1050` significa R$ 10,50. Nesta etapa ainda não há lançamentos financeiros que alterem o saldo.
+Uma conta pertence a uma organização, tem nome e começa com saldo zero. O saldo é representado por um número inteiro de centavos: `1050` significa R$ 10,50. A etapa seguinte, descrita em [categorias e transações](06-categories-transactions.md), adiciona os lançamentos que alteram esse saldo.
 
 ## Os 40 passos desta etapa
 

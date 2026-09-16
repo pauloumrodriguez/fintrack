@@ -5,7 +5,12 @@ export class InMemoryAccountRepository implements AccountRepository {
   public readonly accounts: Account[] = [];
 
   async save(account: Account): Promise<void> {
-    this.accounts.push(account);
+    const index = this.accounts.findIndex((saved) => saved.id === account.id);
+    if (index === -1) {
+      this.accounts.push(account);
+    } else {
+      this.accounts[index] = account;
+    }
   }
 
   async findById(organizationId: string, id: string): Promise<Account | null> {

@@ -3,9 +3,9 @@
 Projeto de estudo construído em pequenas etapas. A proposta é uma API financeira
 para organizações, com contas, categorias, receitas, despesas e transferências.
 
-## Etapa atual: contas
+## Etapa atual: categorias e transações
 
-Implementado: organizações, usuários e contas, com persistência no PostgreSQL. As contas começam com saldo zero e ainda não recebem transações. Autenticação e autorização virão depois do núcleo financeiro.
+Implementado: organizações, usuários, contas, categorias e transações, com persistência no PostgreSQL. Receitas aumentam e despesas diminuem o saldo da conta. Autenticação e autorização virão depois do núcleo financeiro.
 
 ## Comece por aqui
 
@@ -14,6 +14,7 @@ Implementado: organizações, usuários e contas, com persistência no PostgreSQ
 - [Aula 3: PostgreSQL](docs/03-postgresql.md)
 - [Aula 4: usuários](docs/04-users.md)
 - [Aula 5: contas](docs/05-accounts.md)
+- [Aula 6: categorias e transações](docs/06-categories-transactions.md)
 - [Visão do produto e roteiro das próximas etapas](docs/00-roteiro.md)
 
 ## Executar no Windows
@@ -37,6 +38,7 @@ O comando de Docker acima usa o caminho da instalação local deste computador. 
 ```powershell
 npm.cmd test
 npm.cmd run test:e2e
+npm.cmd run test:integration
 npm.cmd run lint
 npm.cmd run build
 ```
@@ -57,6 +59,8 @@ npm.cmd run start:prod
 | `src/app.service.ts` | Produzir os dados da resposta. |
 | `test/app.e2e-spec.ts` | Conferir a resposta pela interface HTTP. |
 | `src/modules/accounts/` | Regras, rotas e persistência de contas. |
+| `src/modules/categories/` | Categorias de receita e despesa. |
+| `src/modules/transactions/` | Lançamentos financeiros e alteração atômica do saldo. |
 | `src/database/migrations/` | Histórico das tabelas do PostgreSQL. |
 | `package.json` | Listar dependências e comandos. |
 | `package-lock.json` | Registrar as versões instaladas para reprodução. |
