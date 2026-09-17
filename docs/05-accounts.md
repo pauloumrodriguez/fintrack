@@ -1,5 +1,8 @@
 # Módulo de contas
 
+> Esta aula descreve a etapa original. Na API atual, as rotas exigem JWT,
+> a organização vem do usuário autenticado e o PostgreSQL aplica RLS.
+
 Uma conta pertence a uma organização, tem nome e começa com saldo zero. O saldo é representado por um número inteiro de centavos: `1050` significa R$ 10,50. A etapa seguinte, descrita em [categorias e transações](06-categories-transactions.md), adiciona os lançamentos que alteram esse saldo.
 
 ## Os 40 passos desta etapa

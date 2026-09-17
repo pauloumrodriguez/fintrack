@@ -17,9 +17,9 @@ tem dados independentes.
 3. **Concluído:** usuários, login e vínculo com organização.
 4. **Concluído:** contas e categorias com autorização e isolamento por RLS.
 5. **Concluído:** receitas e despesas em centavos, saldo consistente e idempotência.
-6. **Concluído:** transferências atômicas: débito e crédito acontecem juntos ou nenhum acontece.
-7. **Em andamento:** relatório mensal, login JWT e papéis estão implementados; ainda cabem relatórios mais detalhados e revisão da arquitetura.
-8. **Em andamento:** RLS, limite de tentativas e testes de segurança implementados; automação e publicação ainda pendentes.
+6. **Concluído:** transferências atômicas com saldo suficiente e proteção contra reenvio.
+7. **Concluído nesta fase:** relatório mensal com receitas, despesas e saldos de abertura e fechamento por conta; login JWT e papéis.
+8. **Concluído nesta fase:** RLS nas seis tabelas de negócio, limite de tentativas e testes de segurança. Automação e publicação continuam como trabalhos futuros.
 
 ## Decisões que guiam as próximas aulas
 

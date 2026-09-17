@@ -5,7 +5,7 @@ para organizações, com contas, categorias, receitas, despesas e transferência
 
 ## Etapa atual: isolamento e proteção contra repetição
 
-Implementado: organizações, usuários, contas, categorias, transações, transferências, relatório mensal, login com JWT, permissões por papel, isolamento por organização no PostgreSQL e proteção contra transações repetidas.
+Implementado: organizações, usuários, contas, categorias, transações, transferências, relatório mensal com saldos por conta, login com JWT, permissões por papel, isolamento por organização no PostgreSQL e proteção contra reenvio de transações e transferências. `POST /auth/register` cria a primeira organização e seu administrador; um administrador autenticado pode criar outra organização com `POST /organizations`, recebendo um token para ela.
 
 ## Comece por aqui
 

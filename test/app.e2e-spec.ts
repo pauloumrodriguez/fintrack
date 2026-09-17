@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { ConflictException, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { randomUUID } from 'node:crypto';
@@ -15,6 +15,9 @@ import { InMemoryCategoryRepository } from './../src/modules/categories/infrastr
 import { TransactionRepository } from './../src/modules/transactions/domain/repositories/transaction.repository.js';
 import { InMemoryTransactionRepository } from './../src/modules/transactions/infrastructure/repositories/in-memory-transaction.repository.js';
 import { JwtAuthGuard } from './../src/modules/auth/jwt-auth.guard.js';
+import { AuthService } from './../src/modules/auth/auth.service.js';
+import { CreateOrganizationUseCase } from './../src/modules/organizations/application/use-cases/create-organization.use-case.js';
+import { OrganizationAlreadyExistsError } from './../src/modules/organizations/application/errors/organization-already-exists.error.js';
 import { UserRole } from './../src/modules/users/domain/entities/user.entity.js';
 import type { ExecutionContext } from '@nestjs/common';
 import type { AuthRequest } from './../src/modules/auth/auth-user.js';
@@ -28,6 +31,24 @@ describe('AppController (e2e)', () => {
     })
       .overrideProvider(OrganizationRepository)
       .useClass(InMemoryOrganizationRepository)
+      .overrideProvider(AuthService)
+      .useFactory({
+        factory: (organizations: OrganizationRepository) => ({
+          provisionOrganization: async (_actor: unknown, name: string) => {
+            try {
+              return await new CreateOrganizationUseCase(organizations).execute(
+                { name },
+              );
+            } catch (error) {
+              if (error instanceof OrganizationAlreadyExistsError) {
+                throw new ConflictException(error.message);
+              }
+              throw error;
+            }
+          },
+        }),
+        inject: [OrganizationRepository],
+      })
       // Existing endpoint tests focus on input/output; auth has its own tests.
       .overrideProvider(JwtAuthGuard)
       .useFactory({

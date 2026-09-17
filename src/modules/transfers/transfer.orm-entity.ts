@@ -16,4 +16,13 @@ export class TransferOrmEntity {
   })
   amountInCents: number;
   @Column({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @Column({
+    name: 'idempotency_key',
+    type: 'varchar',
+    length: 128,
+    nullable: true,
+  })
+  idempotencyKey: string | null;
+  @Column({ name: 'request_hash', type: 'char', length: 64, nullable: true })
+  requestHash: string | null;
 }

@@ -12,75 +12,95 @@ import { TransactionOrmEntity } from './transaction.orm-entity.js';
 
 @Injectable()
 export class TypeOrmTransactionRepository implements TransactionRepository {
-  constructor(
-    private readonly tenantDb: TenantDb,
-  ) {}
+  constructor(private readonly tenantDb: TenantDb) {}
 
   async createAndApplyBalance(transaction: Transaction): Promise<Transaction> {
     try {
-      return await this.tenantDb.run(transaction.organizationId, async (manager) => {
-      if (transaction.idempotencyKey) {
-        const existing = await manager.getRepository(TransactionOrmEntity).findOneBy({
-          organizationId: transaction.organizationId,
-          idempotencyKey: transaction.idempotencyKey,
-        });
-        if (existing) return this.replay(existing, transaction);
-      }
-      const account = await manager
-        .getRepository(AccountOrmEntity)
-        .createQueryBuilder('account')
-        .where('account.id = :id', { id: transaction.accountId })
-        .andWhere('account.organizationId = :organizationId', {
-          organizationId: transaction.organizationId,
-        })
-        .setLock('pessimistic_write')
-        .getOne();
+      return await this.tenantDb.run(
+        transaction.organizationId,
+        async (manager) => {
+          if (transaction.idempotencyKey) {
+            const existing = await manager
+              .getRepository(TransactionOrmEntity)
+              .findOneBy({
+                organizationId: transaction.organizationId,
+                idempotencyKey: transaction.idempotencyKey,
+              });
+            if (existing) return this.replay(existing, transaction);
+          }
+          const account = await manager
+            .getRepository(AccountOrmEntity)
+            .createQueryBuilder('account')
+            .where('account.id = :id', { id: transaction.accountId })
+            .andWhere('account.organizationId = :organizationId', {
+              organizationId: transaction.organizationId,
+            })
+            .setLock('pessimistic_write')
+            .getOne();
 
-      if (!account) {
-        throw new TransactionAccountNotFoundError();
-      }
+          if (!account) {
+            throw new TransactionAccountNotFoundError();
+          }
 
-      const nextBalance =
-        account.balanceInCents + transaction.balanceDeltaInCents;
-      if (!Number.isSafeInteger(nextBalance)) {
-        throw new TransactionBalanceOverflowError();
-      }
-      const updatedAccount = new Account({
-        id: account.id,
-        organizationId: account.organizationId,
-        name: account.name,
-        balanceInCents: account.balanceInCents,
-        createdAt: account.createdAt,
-      }).withBalanceChange(transaction.balanceDeltaInCents);
+          if (transaction.idempotencyKey) {
+            const committed = await manager
+              .getRepository(TransactionOrmEntity)
+              .findOneBy({
+                organizationId: transaction.organizationId,
+                idempotencyKey: transaction.idempotencyKey,
+              });
+            if (committed) return this.replay(committed, transaction);
+          }
 
-      await manager.update(
-        AccountOrmEntity,
-        { id: account.id, organizationId: transaction.organizationId },
-        { balanceInCents: updatedAccount.balanceInCents },
-      );
-      await manager.insert(TransactionOrmEntity, {
-        id: transaction.id,
-        organizationId: transaction.organizationId,
-        accountId: transaction.accountId,
-        categoryId: transaction.categoryId,
-        amountInCents: transaction.amountInCents,
-        type: transaction.type,
-        description: transaction.description,
-        occurredAt: transaction.occurredAt,
-        createdAt: transaction.createdAt,
-        idempotencyKey: transaction.idempotencyKey ?? null,
-        requestHash: transaction.requestHash ?? null,
-      });
-      return transaction;
-      });
-    } catch (error) {
-      if (transaction.idempotencyKey && error instanceof QueryFailedError &&
-        (error.driverError as { constraint?: string }).constraint === 'UQ_transactions_org_idempotency_key') {
-        const existing = await this.tenantDb.run(transaction.organizationId, (manager) =>
-          manager.getRepository(TransactionOrmEntity).findOneBy({
+          const nextBalance =
+            account.balanceInCents + transaction.balanceDeltaInCents;
+          if (!Number.isSafeInteger(nextBalance)) {
+            throw new TransactionBalanceOverflowError();
+          }
+          const updatedAccount = new Account({
+            id: account.id,
+            organizationId: account.organizationId,
+            name: account.name,
+            balanceInCents: account.balanceInCents,
+            createdAt: account.createdAt,
+          }).withBalanceChange(transaction.balanceDeltaInCents);
+
+          await manager.update(
+            AccountOrmEntity,
+            { id: account.id, organizationId: transaction.organizationId },
+            { balanceInCents: updatedAccount.balanceInCents },
+          );
+          await manager.insert(TransactionOrmEntity, {
+            id: transaction.id,
             organizationId: transaction.organizationId,
-            idempotencyKey: transaction.idempotencyKey!,
-          }));
+            accountId: transaction.accountId,
+            categoryId: transaction.categoryId,
+            amountInCents: transaction.amountInCents,
+            type: transaction.type,
+            description: transaction.description,
+            occurredAt: transaction.occurredAt,
+            createdAt: transaction.createdAt,
+            idempotencyKey: transaction.idempotencyKey ?? null,
+            requestHash: transaction.requestHash ?? null,
+          });
+          return transaction;
+        },
+      );
+    } catch (error) {
+      if (
+        transaction.idempotencyKey &&
+        error instanceof QueryFailedError &&
+        (error.driverError as { constraint?: string }).constraint ===
+          'UQ_transactions_org_idempotency_key'
+      ) {
+        const existing = await this.tenantDb.run(
+          transaction.organizationId,
+          (manager) =>
+            manager.getRepository(TransactionOrmEntity).findOneBy({
+              organizationId: transaction.organizationId,
+              idempotencyKey: transaction.idempotencyKey!,
+            }),
+        );
         if (existing) return this.replay(existing, transaction);
       }
       throw error;
@@ -92,7 +112,9 @@ export class TypeOrmTransactionRepository implements TransactionRepository {
     id: string,
   ): Promise<Transaction | null> {
     return this.tenantDb.run(organizationId, async (manager) => {
-      const record = await manager.getRepository(TransactionOrmEntity).findOneBy({ organizationId, id });
+      const record = await manager
+        .getRepository(TransactionOrmEntity)
+        .findOneBy({ organizationId, id });
       return record ? this.toDomain(record) : null;
     });
   }
@@ -102,7 +124,8 @@ export class TypeOrmTransactionRepository implements TransactionRepository {
   ): Promise<Transaction[]> {
     return this.tenantDb.run(organizationId, async (manager) => {
       const records = await manager.getRepository(TransactionOrmEntity).find({
-        where: { organizationId }, order: { occurredAt: 'DESC', id: 'DESC' },
+        where: { organizationId },
+        order: { occurredAt: 'DESC', id: 'DESC' },
       });
       return records.map((record) => this.toDomain(record));
     });
@@ -124,7 +147,10 @@ export class TypeOrmTransactionRepository implements TransactionRepository {
     });
   }
 
-  private replay(record: TransactionOrmEntity, request: Transaction): Transaction {
+  private replay(
+    record: TransactionOrmEntity,
+    request: Transaction,
+  ): Transaction {
     if (record.requestHash !== request.requestHash) {
       throw new TransactionIdempotencyConflictError();
     }

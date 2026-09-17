@@ -1,5 +1,10 @@
 # Aula 2 — Organizações
 
+> Esta aula registra a primeira versão, em memória. Na API atual, `POST /organizations`
+> exige um token de administrador e cria também o administrador da nova organização.
+> Para criar a primeira organização, use `POST /auth/register`. As consultas
+> também exigem autenticação e mostram apenas a organização do usuário.
+
 ## O que funciona
 
 O módulo de organizações possui três operações:

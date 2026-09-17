@@ -14,14 +14,21 @@ export class TypeOrmUserRepository implements UserRepository {
     try {
       await this.tenantDb.run(user.organizationId, async (manager) => {
         await manager.getRepository(UserOrmEntity).save({
-          id: user.id, organizationId: user.organizationId, name: user.name,
-          email: user.email, passwordHash: user.passwordHash,
-          role: user.role, createdAt: user.createdAt,
+          id: user.id,
+          organizationId: user.organizationId,
+          name: user.name,
+          email: user.email,
+          passwordHash: user.passwordHash,
+          role: user.role,
+          createdAt: user.createdAt,
         });
       });
     } catch (error) {
-      if (error instanceof QueryFailedError &&
-          (error.driverError as { constraint?: string }).constraint === 'UQ_users_normalized_email') {
+      if (
+        error instanceof QueryFailedError &&
+        (error.driverError as { constraint?: string }).constraint ===
+          'UQ_users_org_normalized_email'
+      ) {
         throw new UserAlreadyExistsError(user.email);
       }
       throw error;
@@ -32,9 +39,12 @@ export class TypeOrmUserRepository implements UserRepository {
     if (!organizationId) throw new Error('Organization scope is required');
     const normalizedEmail = email.trim().toLowerCase();
     return this.tenantDb.run(organizationId, async (manager) => {
-      const record = await manager.getRepository(UserOrmEntity)
+      const record = await manager
+        .getRepository(UserOrmEntity)
         .createQueryBuilder('user')
-        .where('LOWER(TRIM("user"."email")) = :normalizedEmail', { normalizedEmail })
+        .where('LOWER(TRIM("user"."email")) = :normalizedEmail', {
+          normalizedEmail,
+        })
         .getOne();
       return record ? this.toDomain(record) : null;
     });
@@ -43,7 +53,9 @@ export class TypeOrmUserRepository implements UserRepository {
   findById(id: string, organizationId?: string): Promise<User | null> {
     if (!organizationId) throw new Error('Organization scope is required');
     return this.tenantDb.run(organizationId, async (manager) => {
-      const record = await manager.getRepository(UserOrmEntity).findOneBy({ id, organizationId });
+      const record = await manager
+        .getRepository(UserOrmEntity)
+        .findOneBy({ id, organizationId });
       return record ? this.toDomain(record) : null;
     });
   }
@@ -51,7 +63,8 @@ export class TypeOrmUserRepository implements UserRepository {
   async findAllByOrganizationId(organizationId: string): Promise<User[]> {
     return this.tenantDb.run(organizationId, async (manager) => {
       const records = await manager.getRepository(UserOrmEntity).find({
-        where: { organizationId }, order: { createdAt: 'ASC' },
+        where: { organizationId },
+        order: { createdAt: 'ASC' },
       });
       return records.map((record) => this.toDomain(record));
     });

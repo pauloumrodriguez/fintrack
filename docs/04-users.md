@@ -1,5 +1,10 @@
 # Módulo de usuários
 
+> Esta aula descreve a etapa original. Na API atual, criar e listar usuários
+> exige papel `ADMIN`, e o `organizationId` é obtido do usuário autenticado.
+> O mesmo e-mail pode existir em organizações diferentes; dentro da mesma
+> organização, ele deve ser único.
+
 Esta etapa adiciona usuários vinculados a organizações.
 
 ## Os 20 passos realizados

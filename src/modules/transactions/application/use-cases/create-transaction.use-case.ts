@@ -1,10 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { AccountRepository } from '../../../accounts/domain/repositories/account.repository.js';
 import { CategoryRepository } from '../../../categories/domain/repositories/category.repository.js';
-import { Transaction, TransactionType } from '../../domain/entities/transaction.entity.js';
+import {
+  Transaction,
+  TransactionType,
+} from '../../domain/entities/transaction.entity.js';
 import { TransactionRepository } from '../../domain/repositories/transaction.repository.js';
 import { TransactionAccountNotFoundError } from '../errors/transaction-account-not-found.error.js';
-import { TransactionBalanceOverflowError } from '../errors/transaction-balance-overflow.error.js';
 import { TransactionCategoryNotFoundError } from '../errors/transaction-category-not-found.error.js';
 import { TransactionCategoryTypeMismatchError } from '../errors/transaction-category-type-mismatch.error.js';
 
@@ -47,12 +49,20 @@ export class CreateTransactionUseCase {
 
     const now = new Date();
     const requestHash = input.idempotencyKey
-      ? createHash('sha256').update(JSON.stringify({
-          accountId: input.accountId, categoryId: input.categoryId,
-          amountInCents: input.amountInCents, type: input.type,
-          description: (input.description ?? '').trim(),
-          occurredAt: input.occurredAt ? new Date(input.occurredAt).toISOString() : null,
-        })).digest('hex')
+      ? createHash('sha256')
+          .update(
+            JSON.stringify({
+              accountId: input.accountId,
+              categoryId: input.categoryId,
+              amountInCents: input.amountInCents,
+              type: input.type,
+              description: (input.description ?? '').trim(),
+              occurredAt: input.occurredAt
+                ? new Date(input.occurredAt).toISOString()
+                : null,
+            }),
+          )
+          .digest('hex')
       : undefined;
     const transaction = new Transaction({
       id: randomUUID(),
@@ -67,13 +77,6 @@ export class CreateTransactionUseCase {
       idempotencyKey: input.idempotencyKey,
       requestHash,
     });
-    if (
-      !Number.isSafeInteger(
-        account.balanceInCents + transaction.balanceDeltaInCents,
-      )
-    ) {
-      throw new TransactionBalanceOverflowError();
-    }
     return this.transactions.createAndApplyBalance(transaction);
   }
 }

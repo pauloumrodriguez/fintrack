@@ -14,6 +14,8 @@ import { TransferOrmEntity } from '../modules/transfers/transfer.orm-entity.js';
 import { CreateTransfersTable2026091618000 } from './migrations/2026091618000-create-transfers-table.js';
 import { EnableTenantRls2026091619000 } from './migrations/2026091619000-enable-tenant-rls.js';
 import { AddTransactionIdempotency2026091620000 } from './migrations/2026091620000-add-transaction-idempotency.js';
+import { AddTransferIdempotency2026091621000 } from './migrations/2026091621000-add-transfer-idempotency.js';
+import { ScopeUserEmailToOrganization2026091622000 } from './migrations/2026091622000-scope-user-email-to-organization.js';
 
 if (!process.env.MIGRATION_DATABASE_URL) {
   try {
@@ -49,6 +51,8 @@ export default new DataSource({
     CreateTransfersTable2026091618000,
     EnableTenantRls2026091619000,
     AddTransactionIdempotency2026091620000,
+    AddTransferIdempotency2026091621000,
+    ScopeUserEmailToOrganization2026091622000,
   ],
   synchronize: false,
 });

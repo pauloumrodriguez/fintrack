@@ -24,9 +24,9 @@ produção, não entregue a senha de migração ao processo da API. RLS protege
 contra consultas sem filtro ou com filtro errado; ele não substitui proteção
 contra execução arbitrária de SQL com as credenciais da aplicação.
 
-## Evitar lançamentos duplicados
+## Evitar lançamentos e transferências duplicados
 
-Todo `POST /transactions` exige o cabeçalho `Idempotency-Key` com 8 a 128
+Todo `POST /transactions` e `POST /transfers` exige o cabeçalho `Idempotency-Key` com 8 a 128
 caracteres seguros. Gere uma chave nova para cada intenção de lançamento e
 **reutilize a mesma chave ao tentar novamente** após uma falha de rede.
 
@@ -36,11 +36,12 @@ $body = @{ accountId = $accountId; categoryId = $categoryId; amountInCents = 250
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:3000/transactions -Headers $headers -ContentType 'application/json' -Body $body
 ```
 
-Reenviar **a mesma chave e os mesmos dados** devolve o lançamento original,
+Reenviar **a mesma chave e os mesmos dados** devolve o lançamento ou a transferência original,
 sem alterar o saldo de novo. Reutilizar a chave com dados diferentes recebe
 HTTP 409. A chave é única dentro da organização, e o banco aplica essa regra
 mesmo quando duas requisições chegam simultaneamente. O hash usado na
-comparação fica no banco e não aparece nas respostas da API.
+comparação fica no banco e não aparece nas respostas da API. A regra também
+é testada com duas requisições simultâneas.
 
 ## Tentativas de acesso
 
