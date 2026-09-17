@@ -37,9 +37,16 @@ describe('AppController (e2e)', () => {
               .switchToHttp()
               .getRequest<AuthRequest>();
             const first = (await organizations.findAll())[0];
+            const body = httpRequest.body as
+              { organizationId?: string } | undefined;
+            const params = httpRequest.params as Record<string, string>;
             httpRequest.user = {
               id: 'test-user',
-              organizationId: first?.id ?? '',
+              organizationId:
+                body?.organizationId ??
+                params.organizationId ??
+                first?.id ??
+                '',
               role: UserRole.ADMIN,
             };
             return true;

@@ -20,7 +20,12 @@ export class TransferController {
   @Post('transfers')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   create(@Body() body: CreateTransferDto, @Req() request: AuthRequest) {
-    return this.transfers.create({ ...body, organizationId: request.user!.organizationId });
+    return this.transfers.create({
+      organizationId: request.user!.organizationId,
+      fromAccountId: body.fromAccountId,
+      toAccountId: body.toAccountId,
+      amountInCents: body.amountInCents,
+    });
   }
 
   @Get('organizations/:organizationId/transfers')

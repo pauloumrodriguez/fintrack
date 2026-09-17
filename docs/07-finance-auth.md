@@ -11,7 +11,7 @@ o papel e a organização em cada chamada.
 | Método e rota | Uso |
 | --- | --- |
 | `POST /auth/register` | Cria organização e primeiro administrador juntos. |
-| `POST /auth/login` | Confere e-mail/senha e devolve `accessToken`. |
+| `POST /auth/login` | Confere organização, e-mail e senha; devolve `accessToken`. |
 | `GET /auth/me` | Mostra id, organização e papel do usuário autenticado. |
 | `POST /transfers` | Move centavos de uma conta para outra. |
 | `GET /organizations/:organizationId/transfers` | Lista as transferências. |
@@ -30,7 +30,9 @@ O token expira em 1 hora. O relatório retorna `incomeInCents`,
 | Criar contas, categorias, transações e transferências | Sim | Sim | Não |
 | Criar e listar usuários | Sim | Não | Não |
 
-Toda chamada que informa `organizationId` precisa usar a organização do token.
+No login, informe `organizationId` junto com e-mail e senha. Nas rotas protegidas,
+o servidor usa a organização do token; o `organizationId` no corpo é opcional e,
+se informado, precisa coincidir com o do token.
 O papel é consultado no banco a cada pedido, então a decisão não depende de um
 papel antigo guardado no JWT.
 
@@ -46,15 +48,17 @@ Transferências ficam em uma tabela própria e não contam como receita ou despe
 ```powershell
 $body = @{ organizationName = 'Padaria'; name = 'Paulo'; email = 'paulo@example.com'; password = 'senha-forte-123' } | ConvertTo-Json
 $registration = Invoke-RestMethod -Method Post -Uri http://127.0.0.1:3000/auth/register -ContentType 'application/json' -Body $body
-$token = $registration.accessToken
+$loginBody = @{ organizationId = $registration.organization.id; email = 'paulo@example.com'; password = 'senha-forte-123' } | ConvertTo-Json
+$login = Invoke-RestMethod -Method Post -Uri http://127.0.0.1:3000/auth/login -ContentType 'application/json' -Body $loginBody
+$token = $login.accessToken
 $headers = @{ Authorization = "Bearer $token" }
 Invoke-RestMethod -Uri "http://127.0.0.1:3000/organizations/$($registration.organization.id)/reports/monthly?month=2026-09" -Headers $headers
 ```
 
-Para transferir, envie JSON com `organizationId`, `fromAccountId`,
+Para transferir, envie JSON com `fromAccountId`,
 `toAccountId` e `amountInCents` para `POST /transfers`. Por exemplo, `2500`
 centavos representam R$ 25,00. A conta de origem precisa ter saldo suficiente.
 
-Para rodar tudo em outra máquina, configure `DATABASE_URL` e `JWT_SECRET` no
+Para rodar tudo em outra máquina, configure as variáveis do `.env.example` no
 `.env`, inicie o PostgreSQL e execute `npm.cmd run migration:run` antes de
 iniciar a API. Não coloque o token ou a chave JWT no Git.

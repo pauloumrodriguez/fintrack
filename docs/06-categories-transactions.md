@@ -74,4 +74,4 @@ O teste de integração usa o PostgreSQL local. Ele cria dados temporários pró
 
 ## Limites desta etapa
 
-A API ainda não autentica o usuário nem associa a organização ao usuário autenticado. Também não há chave de idempotência: reenviar o mesmo `POST /transactions` registra outro lançamento. Por isso, esta versão serve para estudo e testes locais; autenticação e proteção contra requisições repetidas serão tratadas antes de uso real.
+Esta aula descreve a implementação original. O projeto atual já autentica o usuário e exige `Idempotency-Key` em `POST /transactions`; veja [Aula 8](08-isolamento-idempotencia.md).

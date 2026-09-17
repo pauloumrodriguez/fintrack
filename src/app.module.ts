@@ -19,12 +19,18 @@ import { TenantDbModule } from './database/tenant-db.js';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
-        type: 'postgres',
-        url: configService.getOrThrow<string>('DATABASE_URL'),
-        autoLoadEntities: true,
-        synchronize: false,
-      }),
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
+        const url = configService.getOrThrow<string>('DATABASE_URL');
+        if (new URL(url).username !== 'fintrack_app') {
+          throw new Error('DATABASE_URL must use the fintrack_app role');
+        }
+        return {
+          type: 'postgres',
+          url,
+          autoLoadEntities: true,
+          synchronize: false,
+        };
+      },
     }),
     TenantDbModule,
     OrganizationsModule,

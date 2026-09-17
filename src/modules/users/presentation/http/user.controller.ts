@@ -28,7 +28,13 @@ export class UserController {
   @Post('users')
   @Roles(UserRole.ADMIN)
   async create(@Body() body: CreateUserDto, @Req() request: AuthRequest) {
-    const user = await this.createUserUseCase.execute({ ...body, organizationId: request.user!.organizationId });
+    const user = await this.createUserUseCase.execute({
+      organizationId: request.user!.organizationId,
+      name: body.name,
+      email: body.email,
+      password: body.password,
+      role: body.role,
+    });
 
     return UserHttpMapper.toResponse(user);
   }

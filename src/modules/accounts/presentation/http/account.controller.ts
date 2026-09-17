@@ -30,7 +30,10 @@ export class AccountController {
   @Post('accounts')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   async create(@Body() body: CreateAccountDto, @Req() request: AuthRequest) {
-    const account = await this.createAccount.execute({ ...body, organizationId: request.user!.organizationId });
+    const account = await this.createAccount.execute({
+      organizationId: request.user!.organizationId,
+      name: body.name,
+    });
     return AccountHttpMapper.toResponse(account);
   }
 

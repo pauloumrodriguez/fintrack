@@ -3,9 +3,9 @@
 Projeto de estudo construído em pequenas etapas. A proposta é uma API financeira
 para organizações, com contas, categorias, receitas, despesas e transferências.
 
-## Etapa atual: transferências, relatório e acesso
+## Etapa atual: isolamento e proteção contra repetição
 
-Implementado: organizações, usuários, contas, categorias, transações, transferências, relatório mensal, login com JWT e permissões por papel. Receitas e despesas alteram o saldo; transferências movem saldo entre contas sem afetar o resultado do mês.
+Implementado: organizações, usuários, contas, categorias, transações, transferências, relatório mensal, login com JWT, permissões por papel, isolamento por organização no PostgreSQL e proteção contra transações repetidas.
 
 ## Comece por aqui
 
@@ -16,6 +16,7 @@ Implementado: organizações, usuários, contas, categorias, transações, trans
 - [Aula 5: contas](docs/05-accounts.md)
 - [Aula 6: categorias e transações](docs/06-categories-transactions.md)
 - [Aula 7: transferências, relatório e acesso](docs/07-finance-auth.md)
+- [Aula 8: isolamento e transações repetidas](docs/08-isolamento-idempotencia.md)
 - [Visão do produto e roteiro das próximas etapas](docs/00-roteiro.md)
 
 ## Executar no Windows
@@ -32,7 +33,7 @@ npm.cmd run start:dev
 Se as dependências já estiverem instaladas, não precisa repetir `npm.cmd ci`.
 Abra http://127.0.0.1:3000/health. Para parar o servidor, pressione Ctrl+C.
 
-O comando de Docker acima usa o caminho da instalação local deste computador. O arquivo `.env` contém a conexão local e a chave `JWT_SECRET`; ele não é enviado ao Git. Use `.env.example` como referência em outra máquina e gere uma chave aleatória com pelo menos 32 caracteres.
+O comando de Docker acima usa o caminho da instalação local deste computador. O arquivo `.env` contém as conexões locais e a chave `JWT_SECRET`; ele não é enviado ao Git. Use `.env.example` como referência em outra máquina. A migração usa `MIGRATION_DATABASE_URL`; a API usa `DATABASE_URL` com a conta limitada `fintrack_app`. Em produção, forneça as credenciais de migração apenas ao processo de migração.
 
 ## Verificar
 

@@ -13,13 +13,13 @@ tem dados independentes.
 ## Entregas pequenas
 
 1. **Concluído:** aplicação NestJS com `GET /health` e guia da primeira aula.
-2. Organização: modelo, regras, cadastro, PostgreSQL e migrations.
-3. Usuários, autenticação e vínculo com organização.
-4. Contas e categorias, com autorização e isolamento entre organizações.
-5. Receitas e despesas, representação exata de dinheiro e consistência do saldo.
+2. **Concluído:** organização, cadastro, PostgreSQL e migrações.
+3. **Concluído:** usuários, login e vínculo com organização.
+4. **Concluído:** contas e categorias com autorização e isolamento por RLS.
+5. **Concluído:** receitas e despesas em centavos, saldo consistente e idempotência.
 6. **Concluído:** transferências atômicas: débito e crédito acontecem juntos ou nenhum acontece.
 7. **Em andamento:** relatório mensal, login JWT e papéis estão implementados; ainda cabem relatórios mais detalhados e revisão da arquitetura.
-8. **Pendente:** proteções adicionais, automação de testes e publicação.
+8. **Em andamento:** RLS, limite de tentativas e testes de segurança implementados; automação e publicação ainda pendentes.
 
 ## Decisões que guiam as próximas aulas
 

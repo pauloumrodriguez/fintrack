@@ -29,7 +29,11 @@ export class CategoryController {
   @Post('categories')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   create(@Body() body: CreateCategoryDto, @Req() request: AuthRequest) {
-    return this.createCategory.execute({ ...body, organizationId: request.user!.organizationId });
+    return this.createCategory.execute({
+      organizationId: request.user!.organizationId,
+      name: body.name,
+      type: body.type,
+    });
   }
 
   @Get('organizations/:organizationId/categories')
