@@ -13,7 +13,7 @@ Use Node.js 24.20.0 ou superior da linha 24 e abra o terminal na pasta `fintrack
 
 ```powershell
 npm.cmd ci
-& 'C:\Users\paulo\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe' compose up -d
+docker compose up -d
 npm.cmd run migration:run
 npm.cmd run start:dev
 ```
