@@ -13,7 +13,7 @@ Use Node.js 24.20.0 ou superior da linha 24 e abra o terminal na pasta `fintrack
 
 ```powershell
 npm.cmd ci
-& 'C:\Users\paulo\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe' compose up -d
+docker compose up -d
 npm.cmd run migration:run
 npm.cmd run start:dev
 ```
@@ -21,7 +21,7 @@ npm.cmd run start:dev
 Se as dependências já estiverem instaladas, não precisa repetir `npm.cmd ci`.
 Abra http://127.0.0.1:3000/health. Para parar o servidor, pressione Ctrl+C.
 
-O comando de Docker acima usa o caminho da instalação local deste computador. O arquivo `.env` contém as conexões locais e a chave `JWT_SECRET`; ele não é enviado ao Git. Use `.env.example` como referência em outra máquina. A migração usa `MIGRATION_DATABASE_URL`; a API usa `DATABASE_URL` com a conta limitada `fintrack_app`. Em produção, forneça as credenciais de migração apenas ao processo de migração.
+O comando `docker compose` usa o Docker instalado em cada computador. Se o terminal não reconhecer `docker`, inicie o Docker Desktop e abra um novo terminal. O arquivo `.env` contém as conexões locais e a chave `JWT_SECRET`; ele não é enviado ao Git. Use `.env.example` como referência em outra máquina. A migração usa `MIGRATION_DATABASE_URL`; a API usa `DATABASE_URL` com a conta limitada `fintrack_app`. Em produção, forneça as credenciais de migração apenas ao processo de migração.
 
 ## Verificar
 
