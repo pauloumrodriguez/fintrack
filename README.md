@@ -7,18 +7,6 @@ para organizações, com contas, categorias, receitas, despesas e transferência
 
 Implementado: organizações, usuários, contas, categorias, transações, transferências, relatório mensal com saldos por conta, login com JWT, permissões por papel, isolamento por organização no PostgreSQL e proteção contra reenvio de transações e transferências. `POST /auth/register` cria a primeira organização e seu administrador; um administrador autenticado pode criar outra organização com `POST /organizations`, recebendo um token para ela.
 
-## Comece por aqui
-
-- [Aula 1: executar e entender a primeira API](docs/01-primeira-api.md)
-- [Aula 2: criar, listar e buscar organizações](docs/02-organizations.md)
-- [Aula 3: PostgreSQL](docs/03-postgresql.md)
-- [Aula 4: usuários](docs/04-users.md)
-- [Aula 5: contas](docs/05-accounts.md)
-- [Aula 6: categorias e transações](docs/06-categories-transactions.md)
-- [Aula 7: transferências, relatório e acesso](docs/07-finance-auth.md)
-- [Aula 8: isolamento e transações repetidas](docs/08-isolamento-idempotencia.md)
-- [Visão do produto e roteiro das próximas etapas](docs/00-roteiro.md)
-
 ## Executar no Windows
 
 Use Node.js 24.20.0 ou superior da linha 24 e abra o terminal na pasta `fintrack`. Inicie o Docker Desktop antes destes comandos.
